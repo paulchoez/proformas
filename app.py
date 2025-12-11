@@ -135,7 +135,7 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
 
 # --- 2. INTERFAZ WEB ---
 st.set_page_config(page_title="Proformas Pro", page_icon="💼")
-st.title("Generador de Proformas FILJOB 💼")
+st.title("Proformas FILJOB 💼")
 
 # Datos Generales
 with st.container(border=True):
@@ -214,3 +214,4 @@ if st.button("Generar PDF", type="primary", use_container_width=True):
     else:
 
         st.error("⚠️ Faltan datos.")
+
