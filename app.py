@@ -76,7 +76,6 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('Helvetica', 'B', 10)
     h = 10 
-    
     # 🔴 CORRECCIÓN ENCABEZADO: Usamos padding real en lugar de espacios
     x_base = pdf.get_x() # Guardamos X inicial (aprox 10)
     pdf.set_x(x_base + 2) # Movemos 2mm a la derecha
@@ -144,6 +143,7 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_y(-30)
     pdf.set_font('Helvetica', 'I', 8)
     pdf.set_text_color(150, 150, 150)
+    
     pdf.cell(0, 10, "Gracias por elegirnos como su solución confiable", 0, 0, 'C')
 
     return bytes(pdf.output(dest='S'))
@@ -229,6 +229,7 @@ if st.button("Generar PDF", type="primary", use_container_width=True):
     else:
 
         st.error("⚠️ Faltan datos.")
+
 
 
 
