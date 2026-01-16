@@ -94,12 +94,29 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_fill_color(*color_fondo_tabla) # Color cebra suave
 
     for item in items:
-        # Usamos border=0 para quitar líneas, o 'B' para solo línea inferior
-        pdf.cell(100, h, f"  {item['desc']}", 'B', 0, 'L', fill=fill)
-        pdf.cell(20, h, str(item['cant']), 'B', 0, 'C', fill=fill)
-        pdf.cell(35, h, f"${item['precio']:.2f}", 'B', 0, 'R', fill=fill)
-        pdf.cell(35, h, f"${item['total']:.2f}  ", 'B', 1, 'R', fill=fill)
-        # fill = not fill # Descomenta si quieres efecto cebra (rayado)
+       # 1. Guardamos las coordenadas antes de escribir nada (X y Y iniciales)
+        x_start = pdf.get_x()
+        y_start = pdf.get_y()
+
+        # 2. Imprimimos la Descripción usando Multi_cell
+        # Esto permite que el texto baje a la siguiente línea si es largo.
+        # h=5 define la altura de CADA LÍNEA de texto, no de la fila completa.
+        pdf.multi_cell(100, 5, f"  {item['desc']}", border='B', align='L', fill=fill)
+
+        # 3. Calculamos la altura real que tomó la fila
+        # Restamos donde quedó el cursor (y_end) menos donde empezó (y_start)
+        y_end = pdf.get_y()
+        alto_fila = y_end - y_start
+
+        # 4. Movemos el cursor de vuelta arriba, pero a la derecha de la descripción
+        # x_start + 100 (porque 100 es el ancho de la columna descripción)
+        pdf.set_xy(x_start + 100, y_start)
+
+        # 5. Imprimimos las otras columnas con la altura dinámica (alto_fila)
+        # Así, si la descripción ocupa 3 líneas, la cantidad y precio también ocuparán 3 líneas de alto.
+        pdf.cell(20, alto_fila, str(item['cant']), 'B', 0, 'C', fill=fill)
+        pdf.cell(35, alto_fila, f"${item['precio']:.2f}", 'B', 0, 'R', fill=fill)
+        pdf.cell(35, alto_fila, f"${item['total']:.2f}  ", 'B', 1, 'R', fill=fill) # El 1 final salta a la prox fila
 
     # --- 4. TOTALES (Diseño de tarjeta) ---
     pdf.ln(10)
@@ -214,4 +231,5 @@ if st.button("Generar PDF", type="primary", use_container_width=True):
     else:
 
         st.error("⚠️ Faltan datos.")
+
 
