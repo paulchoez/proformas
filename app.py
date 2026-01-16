@@ -34,16 +34,14 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     
     pdf.ln(15) # Separador visual
     
-    # Línea decorativa
-    pdf.set_draw_color(*color_primario)
+   pdf.set_draw_color(*color_primario)
     pdf.set_line_width(1)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(5)
 
-    # --- 2. INFO CLIENTE Y PROFORMA (Diseño en 2 columnas invisibles) ---
+    # --- 2. INFO CLIENTE Y PROFORMA ---
     y_antes = pdf.get_y()
     
-    # Columna Izquierda: Cliente
     pdf.set_text_color(*color_texto)
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(100, 6, "FACTURAR A:", 0, 1)
@@ -51,10 +49,9 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_font('Helvetica', '', 10)
     pdf.cell(100, 5, cliente, 0, 1)
     pdf.cell(100, 5, f"RUC: {ruc}", 0, 1)
-    pdf.cell(100, 5, f"Dirección: {direccion}", 0, 1)
-    pdf.cell(100, 5, f"Teléfono: {telefono}", 0, 1)
+    pdf.cell(100, 5, direccion, 0, 1)
+    pdf.cell(100, 5, telefono, 0, 1)
 
-    # Columna Derecha: Datos Proforma (Movemos el cursor)
     pdf.set_xy(120, y_antes) 
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(80, 6, "DETALLES:", 0, 1, 'R')
@@ -68,60 +65,63 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.cell(80, 5, f"Fecha: {f_emision}", 0, 1, 'R')
     
     pdf.set_x(120)
-    pdf.set_text_color(200, 0, 0) # Rojo sutil
+    pdf.set_text_color(200, 0, 0)
     pdf.cell(80, 5, f"Vence: {f_validez}", 0, 1, 'R')
 
     pdf.ln(15)
 
-    # --- 3. TABLA MODERNA (Sin bordes verticales) ---
+    # --- 3. TABLA MODERNA MEJORADA ---
     # Encabezados
     pdf.set_fill_color(*color_primario)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('Helvetica', 'B', 10)
-    
-    # Altura de fila
     h = 10 
     
-    pdf.cell(100, h, "  Descripción", 0, 0, 'L', fill=True) # Espacio al inicio para estética
+    # 🔴 CORRECCIÓN ENCABEZADO: Usamos padding real en lugar de espacios
+    x_base = pdf.get_x() # Guardamos X inicial (aprox 10)
+    pdf.set_x(x_base + 2) # Movemos 2mm a la derecha
+    pdf.cell(98, h, "Descripción", 0, 0, 'L', fill=True) # Celda un poco más estrecha
+    pdf.set_x(x_base + 100) # Volvemos a la posición correcta para la siguiente celda
+
     pdf.cell(20, h, "Cant.", 0, 0, 'C', fill=True)
     pdf.cell(35, h, "Precio Unit.", 0, 0, 'R', fill=True)
-    pdf.cell(35, h, "Total  ", 0, 1, 'R', fill=True) # Espacio al final
+    pdf.cell(35, h, "Total  ", 0, 1, 'R', fill=True)
 
-    # Filas
+    # Filas del cuerpo
     pdf.set_font('Helvetica', '', 10)
     pdf.set_text_color(*color_texto)
     fill = False
-    pdf.set_fill_color(*color_fondo_tabla) # Color cebra suave
+    pdf.set_fill_color(*color_fondo_tabla)
 
+    # --- BUCLE DE FILAS CON ESPACIADO Y SANGRÍA ---
     for item in items:
-       # 1. Guardamos las coordenadas antes de escribir nada (X y Y iniciales)
-        x_start = pdf.get_x()
+        x_base = pdf.get_x()
         y_start = pdf.get_y()
 
-        # 2. Imprimimos la Descripción usando Multi_cell
-        # Esto permite que el texto baje a la siguiente línea si es largo.
-        # h=5 define la altura de CADA LÍNEA de texto, no de la fila completa.
-        pdf.multi_cell(100, 5, f"  {item['desc']}", border='B', align='L', fill=fill)
+        # 🔴 CORRECCIÓN 1: Sangría consistente para todas las líneas
+        # Movemos el inicio 2mm a la derecha
+        pdf.set_x(x_base + 2) 
+        # Imprimimos SIN los espacios "  " manuales, en una celda de 98mm
+        pdf.multi_cell(98, 5, f"{item['desc']}", border='B', align='L', fill=fill)
 
-        # 3. Calculamos la altura real que tomó la fila
-        # Restamos donde quedó el cursor (y_end) menos donde empezó (y_start)
+        # Calculamos altura
         y_end = pdf.get_y()
         alto_fila = y_end - y_start
 
-        # 4. Movemos el cursor de vuelta arriba, pero a la derecha de la descripción
-        # x_start + 100 (porque 100 es el ancho de la columna descripción)
-        pdf.set_xy(x_start + 100, y_start)
+        # Movemos cursor para el resto de columnas
+        pdf.set_xy(x_base + 100, y_start)
 
-        # 5. Imprimimos las otras columnas con la altura dinámica (alto_fila)
-        # Así, si la descripción ocupa 3 líneas, la cantidad y precio también ocuparán 3 líneas de alto.
+        # Imprimimos columnas restantes
         pdf.cell(20, alto_fila, str(item['cant']), 'B', 0, 'C', fill=fill)
         pdf.cell(35, alto_fila, f"${item['precio']:.2f}", 'B', 0, 'R', fill=fill)
-        pdf.cell(35, alto_fila, f"${item['total']:.2f}  ", 'B', 1, 'R', fill=fill) # El 1 final salta a la prox fila
+        pdf.cell(35, alto_fila, f"${item['total']:.2f}  ", 'B', 1, 'R', fill=fill) # Salto de línea al final
+        
+        # 🔴 CORRECCIÓN 2: Espacio entre filas
+        # Agregamos un salto vertical de 3mm después de cada fila completa
+        pdf.ln(3)
 
-    # --- 4. TOTALES (Diseño de tarjeta) ---
-    pdf.ln(10)
-    
-    # Calculamos posición X para que quede a la derecha
+    # --- 4. TOTALES ---
+    pdf.ln(5) # Un poco más de espacio antes de los totales
     x_totales = 130
     
     pdf.set_x(x_totales)
@@ -133,16 +133,14 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.cell(35, 8, "IVA (15%):", 0, 0, 'R')
     pdf.cell(35, 8, f"${valor_iva:.2f}", 0, 1, 'R')
     
-    # Caja de Total Final
     pdf.ln(2)
     pdf.set_x(x_totales)
     pdf.set_fill_color(*color_primario)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('Helvetica', 'B', 12)
-    # Dibujamos celda rellena
     pdf.cell(70, 12, f"  TOTAL: ${total:.2f}  ", 0, 1, 'R', fill=True)
 
-    # --- 5. PIE DE PÁGINA / GRACIAS ---
+    # --- 5. PIE DE PÁGINA ---
     pdf.set_y(-30)
     pdf.set_font('Helvetica', 'I', 8)
     pdf.set_text_color(150, 150, 150)
@@ -231,5 +229,6 @@ if st.button("Generar PDF", type="primary", use_container_width=True):
     else:
 
         st.error("⚠️ Faltan datos.")
+
 
 
