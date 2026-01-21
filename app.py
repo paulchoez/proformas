@@ -34,14 +34,16 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     
     pdf.ln(15) # Separador visual
     
-   pdf.set_draw_color(*color_primario)
+    # Línea decorativa
+    pdf.set_draw_color(*color_primario)
     pdf.set_line_width(1)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(5)
 
-    # --- 2. INFO CLIENTE Y PROFORMA ---
+    # --- 2. INFO CLIENTE Y PROFORMA (Diseño en 2 columnas invisibles) ---
     y_antes = pdf.get_y()
     
+    # Columna Izquierda: Cliente
     pdf.set_text_color(*color_texto)
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(100, 6, "FACTURAR A:", 0, 1)
@@ -49,9 +51,10 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_font('Helvetica', '', 10)
     pdf.cell(100, 5, cliente, 0, 1)
     pdf.cell(100, 5, f"RUC: {ruc}", 0, 1)
-    pdf.cell(100, 5, direccion, 0, 1)
-    pdf.cell(100, 5, telefono, 0, 1)
+    pdf.cell(100, 5, f"Dirección: {direccion}", 0, 1)
+    pdf.cell(100, 5, f"Teléfono: {telefono}", 0, 1)
 
+    # Columna Derecha: Datos Proforma (Movemos el cursor)
     pdf.set_xy(120, y_antes) 
     pdf.set_font('Helvetica', 'B', 10)
     pdf.cell(80, 6, "DETALLES:", 0, 1, 'R')
@@ -65,17 +68,20 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.cell(80, 5, f"Fecha: {f_emision}", 0, 1, 'R')
     
     pdf.set_x(120)
-    pdf.set_text_color(200, 0, 0)
+    pdf.set_text_color(200, 0, 0) # Rojo sutil
     pdf.cell(80, 5, f"Vence: {f_validez}", 0, 1, 'R')
 
     pdf.ln(15)
 
-    # --- 3. TABLA MODERNA MEJORADA ---
+    # --- 3. TABLA MODERNA (Sin bordes verticales) ---
     # Encabezados
     pdf.set_fill_color(*color_primario)
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('Helvetica', 'B', 10)
+    
+    # Altura de fila
     h = 10 
+    
     # 🔴 CORRECCIÓN ENCABEZADO: Usamos padding real en lugar de espacios
     x_base = pdf.get_x() # Guardamos X inicial (aprox 10)
     pdf.set_x(x_base + 2) # Movemos 2mm a la derecha
@@ -143,14 +149,13 @@ def crear_pdf(cliente, ruc, direccion, telefono, numero_proforma, f_emision, f_v
     pdf.set_y(-30)
     pdf.set_font('Helvetica', 'I', 8)
     pdf.set_text_color(150, 150, 150)
-    
     pdf.cell(0, 10, "Gracias por elegirnos como su solución confiable", 0, 0, 'C')
 
     return bytes(pdf.output(dest='S'))
 
 # --- 2. INTERFAZ WEB ---
 st.set_page_config(page_title="Proformas Pro", page_icon="💼")
-st.title("Proformas FILJOB 💼")
+st.title("Generador de Proformas FILJOB 💼")
 
 # Datos Generales
 with st.container(border=True):
@@ -227,7 +232,6 @@ if st.button("Generar PDF", type="primary", use_container_width=True):
         st.success("✅ ¡Listo!")
         st.download_button("⬇️ Descargar PDF", data=pdf_bytes, file_name=f"Proforma_{numero_proforma}.pdf", mime="application/pdf")
     else:
-
         st.error("⚠️ Faltan datos.")
 
 
